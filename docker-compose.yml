@@ -1,10 +1,9 @@
 version: "3.8"
 
 services:
-  db:
+  db-primary:
     image: postgres:13
-    restart: always
-    container_name: postgres_db
+    container_name: postgres_primary
     environment:
       POSTGRES_DB: ${DATABASE_NAME}
       POSTGRES_USER: ${DATABASE_USER}
@@ -13,11 +12,33 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - new-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+  db-replica:
+    image: postgres:13
+    container_name: postgres_replica
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5433:5432" # Use a different port for the replica
+    depends_on:
+      db-primary:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c", "while ! pg_isready -h db-primary -U $${POSTGRES_USER}; do sleep 1; done && /usr/local/bin/docker-entrypoint.sh postgres"]
+    command: >
+      sh -c "pg_basebackup -h db-primary -U $${POSTGRES_USER} -D /var/lib/postgresql/data -Fp -Xs -P &&
+             echo 'standby_mode = on' > /var/lib/postgresql/data/recovery.conf &&
+             echo 'primary_conninfo = host=db-primary port=5432 user=$${POSTGRES_USER} password=$${POSTGRES_PASSWORD}' >> /var/lib/postgresql/data/recovery.conf &&
+             postgres"
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
     networks:
       - new-network
 
@@ -36,24 +57,24 @@ services:
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      DATABASE_HOST: ${DATABASE_HOST}
-      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_HOST_PRIMARY: db-primary
+      DATABASE_PORT_PRIMARY: 5432
+      DATABASE_HOST_REPLICA: db-replica
+      DATABASE_PORT_REPLICA: 5432
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
     ports:
       - "8000:8000"
     depends_on:
-      db:
+      db-primary:
         condition: service_healthy
     networks:
       - new-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://35.178.116.53:8000/api/health"]
+      test: ["CMD", "curl", "-f", "http://35.178.65.136:8000/api/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-     
-
   scraper:
     build:
       context: ./scraper
