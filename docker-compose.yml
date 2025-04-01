@@ -1,0 +1,185 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:13
+    restart: always
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - new-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: django_backend
+    command: >
+      sh -c "./wait-for-db.sh &&
+              python manage.py makemigrations api &&
+              python manage.py migrate &&
+              python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DATABASE_ENGINE: ${DATABASE_ENGINE}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - new-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://35.178.116.53:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+     
+
+  scraper:
+    build:
+      context: ./scraper
+      dockerfile: Dockerfile
+    container_name: news_scraper
+    command: >
+      sh -c "python /app/scraper/main.py"
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_ENGINE: ${DATABASE_ENGINE}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - new-network
+
+  frontend:
+    build:
+      context: ./frontend/news-site
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=${REACT_APP_API_URL}
+    container_name: react_frontend
+    ports:
+      - "3030:3030"
+    volumes:
+      - /app/node_modules
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL}
+    depends_on:
+      - backend
+    networks:
+      - new-network
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/config.yml
+    command: -config.file=/etc/loki/config.yml -config.expand-env=true
+    networks:
+      - new-network
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml -config.expand-env=true
+    depends_on:
+      - loki
+    restart: always
+    networks:
+      - new-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - loki
+    ports:
+      - 9090:9090
+    networks:
+      - new-network
+
+  node-exporter:
+    image: prom/node-exporter
+    ports:
+      - 9100:9100
+    networks:
+      - new-network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/:/rootfs:ro"
+      - "/var/run:/var/run:ro"
+      - "/sys:/sys:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/var/lib/docker:/var/lib/docker:ro"
+    restart: unless-stopped
+    networks:
+      - new-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+      - prometheus
+      - promtail
+    networks:
+      - new-network
+
+volumes:
+  grafana_data:
+  prometheus_data:
+  postgres_data:
+    driver: local
+
+networks:
+  new-network:
+    driver: bridge
