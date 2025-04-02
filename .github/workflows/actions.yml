@@ -49,37 +49,37 @@ jobs:
           strip_components: 1
           debug: true
 
-      # - name: Deploy with Doppler 
-      #   uses: appleboy/ssh-action@v0.1.10
-      #   env:
-      #     DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-      #   with:
-      #     host: ${{ secrets.EC2_IP }}
-      #     username: ${{env.EC2_USER}}
-      #     key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
-      #     script: |
-      #       cd ${{ env.APP_DIR }}
-      #       export DOPPLER_TOKEN="$DOPPLER_TOKEN"
-      #       doppler run -- docker compose down -v
-      #       doppler run -- docker image prune -af
-      #       doppler run -- docker compose build --no-cache
-      #       doppler run -- docker compose up -d --force-recreate
-
-      - name: Deploy via SSH
+      - name: Deploy with Doppler 
         uses: appleboy/ssh-action@v0.1.10
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          host: ${{ secrets.EC2_IP }}
+          username: ${{env.EC2_USER}}
+          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
           script: |
-            cd ${{env.APP_DIR}}
-                # Auto-configure Doppler (no manual setup)
-            doppler configure set token "$DOPPLER_TOKEN" --scope . 
-            doppler setup --project cicd-test-project --config cicd  
-                # Deploy
+            cd ${{ env.APP_DIR }}
+            export DOPPLER_TOKEN="$DOPPLER_TOKEN"
             doppler run -- docker compose down -v
             doppler run -- docker image prune -af
             doppler run -- docker compose build --no-cache
             doppler run -- docker compose up -d --force-recreate
+
+      # - name: Deploy via SSH
+      #   uses: appleboy/ssh-action@v0.1.10
+      #   env:
+      #     DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      #   with:
+      #     host: ${{ secrets.EC2_HOST }}
+      #     username: ubuntu
+      #     key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+      #     script: |
+      #       cd ${{env.APP_DIR}}
+      #           # Auto-configure Doppler (no manual setup)
+      #       doppler configure set token "$DOPPLER_TOKEN" --scope . 
+      #       doppler setup --project cicd-test-project --config cicd  
+      #           # Deploy
+      #       doppler run -- docker compose down -v
+      #       doppler run -- docker image prune -af
+      #       doppler run -- docker compose build --no-cache
+      #       doppler run -- docker compose up -d --force-recreate
