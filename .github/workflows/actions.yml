@@ -76,8 +76,8 @@ jobs:
           script: |
             cd ${{env.APP_DIR}}
                 # Auto-configure Doppler (no manual setup)
-            doppler configure set token "$DOPPLER_TOKEN" --scope . --yes
-            doppler setup --project cicd-test-project --config cicd --yes
+            doppler configure set token "$DOPPLER_TOKEN" --scope . 
+            doppler setup --project cicd-test-project --config cicd 
                 # Deploy
             doppler run -- docker compose down -v
             doppler run -- docker image prune -af
