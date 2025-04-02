@@ -51,6 +51,8 @@ jobs:
 
       - name: Deploy with Doppler
         uses: appleboy/ssh-action@v0.1.10
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         with:
           host: ${{ secrets.EC2_IP }}
           username: ${{env.EC2_USER}}
