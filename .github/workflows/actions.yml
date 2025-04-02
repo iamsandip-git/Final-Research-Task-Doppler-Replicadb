@@ -59,6 +59,7 @@ jobs:
           key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
           script: |
             cd ${{ env.APP_DIR }}
+            export DOPPLER_TOKEN="$DOPPLER_TOKEN"
             doppler run -- docker compose down -v
             doppler run -- docker image prune -af
             doppler run -- docker compose build --no-cache
