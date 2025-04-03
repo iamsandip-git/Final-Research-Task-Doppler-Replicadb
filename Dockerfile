@@ -31,4 +31,4 @@ COPY . /app
 # Expose the port that the app runs on
 EXPOSE 8000
 # Define the entrypoint command
-CMD ["sh", "-c", "./wait-for-db.sh && python manage.py makemigrations api && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+CMD ["sh", "-c", "./wait-for-db.sh && python manage.py runserver 0.0.0.0:8000"]
