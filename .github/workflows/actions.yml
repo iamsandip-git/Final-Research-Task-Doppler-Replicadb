@@ -72,7 +72,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
              # Debug token presence
-             echo "Token length: "${#DOPPLER_TOKEN}"
+             echo "Token length: ${#DOPPLER_TOKEN}"
                # Install Doppler CLI
              curl -Ls https://cli.doppler.com/install | sudo bash
                # Run commands with explicit token
