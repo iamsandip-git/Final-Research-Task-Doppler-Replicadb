@@ -59,10 +59,10 @@ jobs:
           key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
           script: |
             cd ${{ env.APP_DIR }}
-            doppler run -- docker compose down -v
-            doppler run -- docker image prune -af
-            doppler run -- docker compose build --no-cache
-            doppler run -- docker compose up -d --force-recreate
+            doppler run --token "$DOPPLER_TOKEN" -- docker compose down -v
+            doppler run --token "$DOPPLER_TOKEN" -- docker image prune -af
+            doppler run --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
+            doppler run --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
 
       # - name: Deploy via SSH
       #   uses: appleboy/ssh-action@v0.1.10
