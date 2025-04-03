@@ -73,7 +73,7 @@ jobs:
           envs: DOPPLER_TOKEN
           script: |
              # Debug token presence
-             echo "Token: ${#DOPPLER_TOKEN}
+             echo "Token: ${#DOPPLER_TOKEN}"
                # Install Doppler CLI
              sudo curl -Ls https://cli.doppler.com/install | sudo bash
              doppler --version
