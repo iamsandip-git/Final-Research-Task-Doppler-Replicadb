@@ -49,16 +49,37 @@ jobs:
           strip_components: 1
           debug: true
 
+      # - name: Deploy with Doppler
+      #   uses: appleboy/ssh-action@v0.1.10
+      #   env:
+      #     DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      #   with:
+      #     host: ${{ secrets.EC2_IP }}
+      #     username: ${{env.EC2_USER}}
+      #     key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
+      #     script: |
+      #       cd ${{ env.APP_DIR }}
+      #       doppler run --token "$DOPPLER_TOKEN" -- docker compose down -v
+      #       doppler run --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
+      #       doppler run --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
       - name: Deploy with Doppler
         uses: appleboy/ssh-action@v0.1.10
         env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }} # Doppler Service Token
+          EC2_IP: ${{ secrets.EC2_IP }}  
+          EC2_SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }} 
         with:
           host: ${{ secrets.EC2_IP }}
           username: ${{env.EC2_USER}}
           key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
           script: |
-            cd ${{ env.APP_DIR }}
-            doppler run --token "$DOPPLER_TOKEN" -- docker compose down -v
-            doppler run --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
-            doppler run --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
+             # Install Doppler CLI
+             curl -Ls https://cli.doppler.com/install | sudo bash
+                    # Authenticate with Doppler
+             doppler configure set token "$DOPPLER_TOKEN"
+                    # Fetch and inject secrets (e.g., into Docker)
+             doppler run --token "$DOPPLER_TOKEN" -- docker compose down -v
+             doppler run --token "$DOPPLER_TOKEN" -- docker system prune -af
+             doppler run --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
+             doppler run --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
+             
