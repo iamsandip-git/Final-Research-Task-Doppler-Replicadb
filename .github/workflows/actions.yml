@@ -70,11 +70,13 @@ jobs:
           host: ${{ secrets.EC2_IP }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          envs: DOPPLER_TOKEN
           script: |
              # Debug token presence
-             echo "Token length: ${#DOPPLER_TOKEN}"
+             echo "Token: ${#DOPPLER_TOKEN}
                # Install Doppler CLI
-             curl -Ls https://cli.doppler.com/install | sudo bash
+             sudo curl -Ls https://cli.doppler.com/install | sudo bash
+             doppler --version
                # Run commands with explicit token
              doppler run --token "$DOPPLER_TOKEN" -- docker compose down -v
              doppler run --token "$DOPPLER_TOKEN" -- docker system prune -af
