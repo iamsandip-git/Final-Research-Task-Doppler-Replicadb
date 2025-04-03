@@ -2,7 +2,7 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [final-task-doppler]
+    branches: [final-task-doppler-doppler-replicadb]
 
 env:
   EC2_USER: ubuntu
