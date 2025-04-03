@@ -63,23 +63,21 @@ jobs:
       #       doppler run --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
       #       doppler run --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
       - name: Deploy with Doppler
-      uses: appleboy/ssh-action@v0.1.10
-      env:
-        DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}  # Must match GitHub Secret name
-      with:
-        host: ${{ secrets.EC2_IP }}
-        username: ubuntu
-        key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-        script: |
-          # Debug token presence
-          echo "Token length: ${#DOPPLER_TOKEN}"
-    
-          # Install Doppler CLI
-          curl -Ls https://cli.doppler.com/install | sudo bash
-    
-          # Run commands with explicit token
-          doppler run --token "$DOPPLER_TOKEN" -- docker compose down -v
-          doppler run --token "$DOPPLER_TOKEN" -- docker system prune -af
-          doppler run --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
-          doppler run --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
+        uses: appleboy/ssh-action@v0.1.10
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}  # Must match GitHub Secret name
+        with:
+          host: ${{ secrets.EC2_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+             # Debug token presence
+             echo "Token length: "${#DOPPLER_TOKEN}"
+               # Install Doppler CLI
+             curl -Ls https://cli.doppler.com/install | sudo bash
+               # Run commands with explicit token
+             doppler run --token "$DOPPLER_TOKEN" -- docker compose down -v
+             doppler run --token "$DOPPLER_TOKEN" -- docker system prune -af
+             doppler run --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
+             doppler run --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
              
