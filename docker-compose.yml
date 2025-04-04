@@ -47,7 +47,7 @@ services:
     networks:
       - new-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://18.170.227.180/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -121,7 +121,6 @@ services:
     restart: always
     networks:
       - new-network
-
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
