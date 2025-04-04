@@ -77,7 +77,6 @@ jobs:
              echo "Token: ${#DOPPLER_TOKEN}"
                # Install Doppler CLI
              sudo curl -Ls https://cli.doppler.com/install | sudo bash
-             doppler --version
                # Run commands with explicit token
              doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker compose down -v
              doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker system prune -af
