@@ -1,3 +1,74 @@
+# name: Deploy to EC2
+
+# on:
+#   push:
+#     branches: [final-task-doppler-replicadb]
+
+# env:
+#   EC2_USER: ubuntu
+#   APP_DIR: /home/ubuntu/app
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Install CLI
+#         uses: dopplerhq/cli-action@v3
+#       - name: Do something with the CLI
+#         run: doppler secrets --only-names
+#         env:
+#           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
+#       - name: Install SSH key
+#         uses: shimataro/ssh-key-action@v2
+#         with:
+#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#           known_hosts: unnecessary
+#           if_key_exists: replace
+
+#       - name: Setup SSH
+#         uses: webfactory/ssh-agent@v0.7.0
+#         with:
+#           ssh-private-key: |
+#             ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+
+#       - name: Add EC2 to Known Hosts
+#         run: ssh-keyscan ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
+
+#       - name: Copy repository to EC2
+#         uses: appleboy/scp-action@v0.1.7
+#         with:
+#           host: ${{ secrets.EC2_IP }}
+#           username: ${{env.EC2_USER }}
+#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#           source: "."
+#           target: "${{ env.APP_DIR}}"
+#           strip_components: 1
+#           debug: true
+#       - name: Deploy with Doppler
+#         uses: appleboy/ssh-action@v0.1.10
+#         env:
+#           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}  
+#         with:
+#           host: ${{ secrets.EC2_IP }}
+#           username: ubuntu
+#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#           envs: DOPPLER_TOKEN
+#           script: |
+#              cd ${{ env.APP_DIR }}
+#              # Debug token presence
+#              echo "Token: ${#DOPPLER_TOKEN}"
+#                # Install Doppler CLI
+#              sudo curl -Ls https://cli.doppler.com/install | sudo bash
+#                # Run commands with explicit token
+#              doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker compose down -v
+#              doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker system prune -af
+#              doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
+#              doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
+             
 name: Deploy to EC2
 
 on:
@@ -7,6 +78,8 @@ on:
 env:
   EC2_USER: ubuntu
   APP_DIR: /home/ubuntu/app
+  DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}  # Define token globally
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -15,25 +88,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install CLI
-        uses: dopplerhq/cli-action@v3
-      - name: Do something with the CLI
-        run: doppler secrets --only-names
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          known_hosts: unnecessary
-          if_key_exists: replace
-
-      - name: Setup SSH
+      - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.7.0
         with:
-          ssh-private-key: |
-            ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
 
       - name: Add EC2 to Known Hosts
         run: ssh-keyscan ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
@@ -42,44 +100,29 @@ jobs:
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_IP }}
-          username: ${{env.EC2_USER }}
+          username: ${{ env.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           source: "."
-          target: "${{ env.APP_DIR}}"
+          target: "${{ env.APP_DIR }}"
           strip_components: 1
           debug: true
 
-      # - name: Deploy with Doppler
-      #   uses: appleboy/ssh-action@v0.1.10
-      #   env:
-      #     DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-      #   with:
-      #     host: ${{ secrets.EC2_IP }}
-      #     username: ${{env.EC2_USER}}
-      #     key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
-      #     script: |
-      #       cd ${{ env.APP_DIR }}
-      #       doppler run --token "$DOPPLER_TOKEN" -- docker compose down -v
-      #       doppler run --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
-      #       doppler run --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
       - name: Deploy with Doppler
         uses: appleboy/ssh-action@v0.1.10
         env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}  # Must match GitHub Secret name
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         with:
           host: ${{ secrets.EC2_IP }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           envs: DOPPLER_TOKEN
           script: |
-             cd ${{ env.APP_DIR }}
-             # Debug token presence
-             echo "Token: ${#DOPPLER_TOKEN}"
-               # Install Doppler CLI
-             sudo curl -Ls https://cli.doppler.com/install | sudo bash
-               # Run commands with explicit token
-             doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker compose down -v
-             doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker system prune -af
-             doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
-             doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
-             
+            cd ${{ env.APP_DIR }}
+            # Install Doppler CLI
+            sudo curl -Ls https://cli.doppler.com/install | sudo bash
+            # Stop existing containers
+            doppler run --project final-research-task --config cicd_cicd_deploy -- docker compose down -v
+            # Build new images
+            doppler run --project final-research-task --config cicd_cicd_deploy -- docker compose build --no-cache
+            # Start application
+            doppler run --project final-research-task --config cicd_cicd_deploy -- docker compose up -d --force-recreate
