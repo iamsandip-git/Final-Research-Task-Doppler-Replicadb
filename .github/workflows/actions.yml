@@ -78,7 +78,7 @@ on:
 env:
   EC2_USER: ubuntu
   APP_DIR: /home/ubuntu/app
-  DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}  # Define token globally
+  DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }} 
 
 jobs:
   deploy:
@@ -118,11 +118,8 @@ jobs:
           envs: DOPPLER_TOKEN
           script: |
             cd ${{ env.APP_DIR }}
-            # Install Doppler CLI
             sudo curl -Ls https://cli.doppler.com/install | sudo bash
-            # Stop existing containers
             doppler run --project final-research-task --config cicd_cicd_deploy -- docker compose down -v
-            # Build new images
+            doppler run --project final-research-task --config cicd_cicd_deploy -- docker system prune -af
             doppler run --project final-research-task --config cicd_cicd_deploy -- docker compose build --no-cache
-            # Start application
             doppler run --project final-research-task --config cicd_cicd_deploy -- docker compose up -d --force-recreate
