@@ -46,14 +46,6 @@ services:
         condition: service_healthy
     networks:
       - new-network
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://3.10.152.31/api/health"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
-    #   start_period: 30s
-     
-
   scraper:
     build:
       context: ./scraper
@@ -73,9 +65,6 @@ services:
     depends_on:
       - backend
       - db
-        # condition: service_healthy
-        
-        # condition: service_healthy
     networks:
       - new-network
 
