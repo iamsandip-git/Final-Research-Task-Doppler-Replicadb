@@ -68,7 +68,9 @@
 #              doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker system prune -af
 #              doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker compose build --no-cache
 #              doppler run --project final-research-task --config cicd_cicd_deploy --token "$DOPPLER_TOKEN" -- docker compose up -d --force-recreate
-             
+                   # - name: Add EC2 to Known Hosts
+      #   run: ssh-keyscan ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
+
 name: Deploy to EC2
 
 on:
@@ -88,15 +90,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup SSH Agent
+      - name: Setup SSH Github to EC2
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
 
-      # - name: Add EC2 to Known Hosts
-      #   run: ssh-keyscan ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
-
-      - name: Copy repository to EC2
+      - name: Copy repository Github to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_IP }}
