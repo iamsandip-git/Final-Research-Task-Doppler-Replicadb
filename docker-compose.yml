@@ -120,8 +120,8 @@ services:
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-    depends_on:
-      - loki
+    # depends_on:
+
     ports:
       - 9090:9090
     networks:
