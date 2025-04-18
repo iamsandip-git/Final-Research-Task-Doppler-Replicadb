@@ -31,7 +31,7 @@ DEBUG = True
 # print("Allowed hosts is:")
 # print(os.getenv("ALLOWED_HOSTS"))
 
-ALLOWED_HOSTS = ["18.133.157.7"]
+ALLOWED_HOSTS = ["3.10.21.0"]
 
 
 # Application definition
@@ -67,7 +67,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ORIGIN_WHITELIST = ("http://18.133.157.7:3030",)
+CORS_ORIGIN_WHITELIST = ("http://3.10.21.0:3030",)
 
 ROOT_URLCONF = "config.urls"
 

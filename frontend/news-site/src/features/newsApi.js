@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://18.133.157.7:8000';
+const API_BASE_URL = 'http://3.10.21.0:8000';
 
 export const fetchAllNews = async (page = 1) => {
   try {
